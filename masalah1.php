@@ -90,19 +90,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js"></script>
     <script src="https://cdn.canvasjs.com/ga/canvasjs.min.js"></script>
-    
     <!-- FONT -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Poppins">
+    
     <style>
         body {
             font-family: 'Poppins', sans-serif;
             background-color: #f8f9fa;
         }
-        
-        .container {
+
+        .combined-container {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .table-container,
+        .chart-container {
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-            padding: 20px;
-            margin-top: 50px;
+        }
+
+        .chart-container canvas {
+            max-width: 100%;
         }
 
         h2 {
@@ -139,53 +153,123 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             font-size: 18px;
             padding: 15px;
         }
+
+        #sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 250px;
+            z-index: 1000;
+            background-color: #343a40; /* Dark background color */
+            color: #ffffff; /* Text color */
+            padding-top: 20px;
+        }
+
+        #sidebar ul.nav flex-column {
+            padding-left: 0;
+            list-style: none;
+        }
+
+        #sidebar .nav-link {
+            color: #ffffff; /* Text color for sidebar links */
+        }
+
+        #sidebar .nav-link:hover {
+            color: #ffffff; /* Hover color for sidebar links */
+            background-color: #6c757d; /* Background color on hover */
+        }
+
+        #sidebar .active {
+            color: #ffffff; /* Active link color */
+            background-color: #495057; /* Background color for active link */
+        }
+
+        /* Main Content Padding to Avoid Overlapping with Sidebar */
+        main {
+            margin-left: 130px;
+            padding: 20px;
+        }
     </style>
 </head>
 
 <body>
-    <div class="container p-3">
-        <h2 class="text-center mb-4" id="title">Top 5 Product</h2>
-        <div class="row mt-3">
-            <!-- Filter Year -->
-            <div class="col-md-6">
-                <?php
-                foreach ($stmt as $order) {
-                    echo '<div class="year-box" data-status="off" data-year="' . $order['OrderYear'] . '">' . $order['OrderYear'] . '</div>';
-                }
-                ?>
-            </div>
+    <div class="container-fluid">
+        <div class="row">
+            <nav id="sidebar">
+                <div class="position-sticky">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="#">
+                                <i class="bi bi-house-door"></i> Order
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="bi bi-person"></i> Shipping
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="bi bi-box"></i> Refund
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
 
-            <!-- Filter Customer Segment -->
-            <div class="col-md-6">
-                <select class="form-select" id="selectedSegment" aria-label="Default select example">
-                    <option selected>All Segment</option>
-                    <?php
-                    foreach ($cursor as $segment) {
-                        echo '<option value="' . $segment . '">' . $segment . '</option>';
-                    }
-                    ?>
-                </select>
-            </div>
-        </div>
+            <main>
+                <h2 class="text-center mb-4" id="title">Top 5 Product</h2>
+                <div class="container container-filter">
+                    <div class="row">
+                        <!-- Filter Year -->
+                    <div class="col-md-6">
+                            <?php
+                            foreach ($stmt as $order) {
+                                echo '<div class="year-box" data-status="off" data-year="' . $order['OrderYear'] . '">' . $order['OrderYear'] . '</div>';
+                            }
+                            ?>
+                        </div>
+
+                        <!-- Filter Customer Segment -->
+                        <div class="col-md-6">
+                            <select class="form-select" id="selectedSegment" aria-label="Default select example">
+                                <option selected>All Segment</option>
+                                <?php
+                                foreach ($cursor as $segment) {
+                                    echo '<option value="' . $segment . '">' . $segment . '</option>';
+                                }
+                                ?>
+                            </select>
+                        </div>
+                    </div>
+                    
+                </div>
+
+                <div class="container mt-3 combined-container">
+                    <!-- Table Container -->
+                    <div class="table-container">
+                        <table id="ordersTable"
+                            class="table table-striped table-bordered table-hover table-sm">
+                            <thead class="thead">
+                                <tr>
+                                    <th>Product Name</th>
+                                    <th>Total Ordered</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Chart Container -->
+                    <div class="chart-container">
+                        <canvas id="barChart" width="400" height="200"></canvas>
+                    </div>
+                </div>
+            </main>
             
-        <div class="row mt-3">
-            <div class="col-md-6">
-                <table id="ordersTable" class="table table-striped table-bordered table-hover table-sm">
-                    <thead class="thead">
-                        <tr>
-                            <th>Product Name</th>
-                            <th>Total Ordered</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    </tbody>
-                </table>
-            </div>
-            <div class="col-md-6">
-                <canvas id="barChart" width="400" height="200"></canvas>
-            </div>
         </div>
-
     </div>
 
         <script>
