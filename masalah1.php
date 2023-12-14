@@ -62,6 +62,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 ?>
 
+
+
+
+
+
+
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -83,12 +90,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js"></script>
     <script src="https://cdn.canvasjs.com/ga/canvasjs.min.js"></script>
+    
     <!-- FONT -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Poppins">
     <style>
         body {
             font-family: 'Poppins', sans-serif;
             background-color: #f8f9fa;
+        }
+        
+        .container {
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-top: 50px;
         }
 
         h2 {
@@ -130,7 +144,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <body>
     <div class="container p-3">
-        <h2 class="text-center mb-4" id="title"></h2>
+        <h2 class="text-center mb-4" id="title">Top 5 Product</h2>
         <div class="row mt-3">
             <!-- Filter Year -->
             <div class="col-md-6">
@@ -153,9 +167,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </select>
             </div>
         </div>
-
+            
         <div class="row mt-3">
-            <div class="col-md-12">
+            <div class="col-md-6">
                 <table id="ordersTable" class="table table-striped table-bordered table-hover table-sm">
                     <thead class="thead">
                         <tr>
@@ -167,7 +181,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </tbody>
                 </table>
             </div>
+            <div class="col-md-6">
+                <canvas id="barChart" width="400" height="200"></canvas>
+            </div>
         </div>
+
     </div>
 
         <script>
@@ -176,7 +194,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 loadData();
 
                 function loadData(selectedSegment = null, selectedYear = []) {
-                    console.log(selectedYear)
                     $.ajax({
                         method: 'POST',
                         data: {
@@ -198,6 +215,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     "</tr>";
                                 tableBody.append(newRow);
                             }
+
+                            // Bar Chart
+                            new Chart('barChart', {
+                                type: "horizontalBar",
+                                data: {
+                                labels: productsName,
+                                datasets: [{
+                                    fill: false,
+                                    lineTension: 0,
+                                    backgroundColor: "rgba(75, 192, 192, 0.2)",
+                                    borderColor: "rgba(75, 192, 192, 1)",
+                                    data: jumlahOrders.map(order => order.JumlahOrder)
+                                }]
+                                },
+                                options: {
+                                legend: {
+                                    display: false
+                                },
+                                scales: {
+                                    yAxes: [{
+                                    }],
+                                    xAxes: [{
+                                        ticks: {
+                                            min: 0,
+                                            max: Math.max(...jumlahOrders.map(order => order.JumlahOrder)) + 1
+                                        }
+                                    }],
+                                },
+                                title: {
+                                    display: true,
+                                    text: '',
+                                    fontColor: 'grey',
+                                    fontSize: 20
+                                }
+                                }
+                            });
+
                         }
                     });
                 }
@@ -238,9 +292,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
 
                     loadData(selectedSegment, selectedYear);
-
-                    var title = "Top 5 Products By " + (selectedSegment ? selectedSegment + " " : "") + "Segment";
-                    $('#title').text(title);
                 });
 
                 

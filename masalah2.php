@@ -1,10 +1,10 @@
 <?php
 require 'connect.php';
-require_once 'autoload.php';
+// require_once 'autoload.php';
 
-$client = new MongoDB\Client();
-$customers = $client->superstore->customers;
-$products = $client->superstore->products;
+// $client = new MongoDB\Client();
+// $customers = $client->superstore->customers;
+// $products = $client->superstore->products;
 //
 
 // $sql_ship = "SELECT EXTRACT(YEAR FROM o.orderdate) as year, o.rating as rating, DATEDIFF(s.shipdate,o.orderdate) as duration,
@@ -19,7 +19,9 @@ $products = $client->superstore->products;
 $sql = "SELECT DISTINCT YEAR(OrderDate) AS OrderYear FROM orders";
 $stmt = $conn->query($sql)->fetchAll();
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
+}
 $sql_ship = "SELECT 
                 group_duration,
                 AVG(rating) AS avg_rating,
@@ -40,6 +42,7 @@ $sql_ship = "SELECT
 
 
 $stmt_ship = $conn->query($sql_ship)->fetchAll();
+$ship_data_json = json_encode($stmt_ship);
 // echo json_encode($stmt_ship);
 
 
@@ -116,26 +119,12 @@ $stmt_ship = $conn->query($sql_ship)->fetchAll();
                 <table id="shipTable" class="table table-striped table-bordered table-hover table-sm">
                     <thead>
                         <tr>
-                            <th>Group Duration</th>
+                            <th>Duration</th>
                             <th>Average Rating</th>
-                            <th>Rating Percentage</th>
+                            <th>Average Rating Percentage</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <?php foreach ($stmt_ship as $row): ?>
-                            <tr>
-
-                                <td>
-                                    <?php echo $row['group_duration']; ?>
-                                </td>
-                                <td>
-                                    <?php echo $row['avg_rating']; ?>
-                                </td>
-                                <td>
-                                    <?php echo $row['rating_percentage'] . "%"; ?>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
                     </tbody>
                 </table>
 
@@ -150,7 +139,7 @@ $stmt_ship = $conn->query($sql_ship)->fetchAll();
 
     </div>
 
-    <script>
+    <!-- <script>
         $(document).ready(function () {
             $('#shipTable').DataTable({
                 "columnDefs": [{
@@ -162,6 +151,7 @@ $stmt_ship = $conn->query($sql_ship)->fetchAll();
     </script>
 
     <script>
+
         // Assuming $stmt_ship holds the data obtained from the SQL query
 
         // Extracting data from PHP array to JavaScript variables
@@ -211,8 +201,86 @@ $stmt_ship = $conn->query($sql_ship)->fetchAll();
                 // ...other chart configurations
             }
         });
-    </script>
+    </script> -->
 
+    <script>
+        $(document).ready(function() {
+            // for filter year
+            selectedYears = [];
+            $('.year-box').on('click', function() {
+                var status = $(this).data('status');
+                selectedYear = $(this).data('year');
+                if (status == 'off') {
+                    $(this).addClass('selected-year');
+                    $(this).data('status', 'on');
+                    selectedYears.push(selectedYear)
+                } else {
+                    $(this).removeClass('selected-year');
+                    $(this).data('status', 'off');
+                    for (var i = 0; i < selectedYears.length; i++) {
+                        if (selectedYears[i] == selectedYear) {
+                            selectedYears.splice(i, 1);
+                            break;
+                        }
+                    }
+                }
+
+                // updateData(selectedYear)
+
+            });
+
+            function updateData(selectedYear = []) {
+                var tableBody = $('#shipTable tbody');
+                tableBody.empty();
+
+                $.ajax({
+                    method: 'POST',
+                    data: {
+                        'year': selectedYear
+                    },
+                    success: function(e) {
+                        var result = JSON.parse(e);
+                        var jumlahOrders = result.stmt2;
+                        var productsName = result.cursor3;
+                        var tableBody = $('#ordersTable tbody');
+                        tableBody.empty();
+                        
+
+                    }
+                
+                })
+
+                data.forEach(function(row) {
+                    var newRow = '<tr>' +
+                        '<td>' + row.group_duration + '</td>' +
+                        '<td>' + row.avg_rating + '</td>' +
+                        '<td>' + row.rating_percentage + '%</td>' +
+                        '</tr>';
+
+                    tableBody.append(newRow);
+                });
+            }
+
+            // function updateData(data, selectedYear = []) {
+            //     var tableBody = $('#shipTable tbody');
+            //     tableBody.empty();
+
+            //     data.forEach(function(row) {
+            //         var newRow = '<tr>' +
+            //             '<td>' + row.group_duration + '</td>' +
+            //             '<td>' + row.avg_rating + '</td>' +
+            //             '<td>' + row.rating_percentage + '%</td>' +
+            //             '</tr>';
+
+            //         tableBody.append(newRow);
+            //     });
+            // }
+
+            // var shipData = <?php echo $ship_data_json; ?>;
+            // updateData(shipData)
+        
+        })
+    </script>
 
 </body>
 
