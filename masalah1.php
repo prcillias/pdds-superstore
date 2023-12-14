@@ -43,7 +43,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $productIDs[] = $productID;
     }
 
-    
     foreach ($productIDs as $productID) {
         $query = ['Product ID' => $productID];
 
@@ -54,20 +53,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
+    $sql2 = "SELECT COUNT(DISTINCT CustomerID) AS totalCustomer, COUNT(DISTINCT ProductID) AS totalProduct, COUNT(DISTINCT OrderID) AS totalOrders, ROUND(AVG(Sales), 1) AS avgSales
+                FROM orders
+                WHERE " . (empty($customerIds) ? '1' : "CustomerID IN (" . implode(",", $customerIds) . ")") . (empty($year) ? '' : " AND YEAR(OrderDate) IN (" . implode(",", $year) . ")") . "";
+
+    $stmt3 = $conn->query($sql2)->fetchAll();
+
+    foreach ($stmt3 as $row) {
+        $totalCustomer = $row['totalCustomer'];
+        $totalProduct = $row['totalProduct'];
+        $totalOrders = $row['totalOrders'];
+        $avgSales = $row['avgSales'];
+    }
+
     $response['stmt2'] = $stmt2;
     $response['cursor3'] = $cursor3;
+    $response['totalCustomer'] = $totalCustomer;
+    $response['totalProduct'] = $totalProduct;
+    $response['totalOrders'] = $totalOrders;
+    $response['avgSales'] = $avgSales;
 
     echo json_encode($response);
     exit;
 }
 ?>
-
-
-
-
-
-
-
 
 <!DOCTYPE html>
 <html lang="en">
@@ -92,17 +101,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <script src="https://cdn.canvasjs.com/ga/canvasjs.min.js"></script>
     <!-- FONT -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Poppins">
-    
-    <style>
-        body {
-            font-family: 'Poppins', sans-serif;
-            background-color: #f8f9fa;
-        }
 
+    <style>
         .combined-container {
             margin-top: 20px;
             padding: 15px;
-            border-radius: 8px;
         }
 
         .table-container,
@@ -130,28 +133,74 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             margin: 5px;
             padding: 15px;
             cursor: pointer;
-            border: 2px solid #000;
-            /* border-radius: 10px; */
+            border: 2px solid #725C3F;
             text-align: center;
-            font-size: 18px;
+            font-size: 20px;
+            color: #725C3F;
             line-height: 1.5;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+
+        [class^="kpi"] {
+            width: 300px;
+            height: 105px;
+            border: 1px solid #725C3F;
+            border-radius: 10px;
+            margin: 10px;
+            padding: 10px;
+            box-sizing: border-box;
+            display: inline-block;
+            text-align: center;
+            font-size: 45px;
+            color: #000;
+            line-height: 50px;
+            background-color: #E5ADA8;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        [class^="kpi"] p {
+            font-size: 18px;
+            margin: 0;
         }
 
         .selected-year {
-            background-color: gray;
-            color: white;
+            background-color: #725C3F;
+            color: #E5e0d8;
         }
 
         .form-select {
-            font-size: 20px; /* Increased font size */
+            font-size: 25px;
+            color: #725C3F;
             padding: 10px;
-            text-align: center; 
+            text-align: center;
+            border: 2px solid #725C3F;
+            background-color: transparent;
+            appearance: none;
+            -webkit-appearance: none;
         }
 
         #ordersTable th,
         #ordersTable td {
             font-size: 18px;
             padding: 15px;
+        }
+
+        .table-container {
+            background-color: #E5ADA8;
+        }
+
+        .table thead th {
+            background-color: #725C3F;
+            color: #EFE8D8;
+        }
+
+        .table tbody tr:nth-child(even) {
+            background-color: #D0A778;
+        }
+
+        .table tbody tr:hover {
+            background-color: #725C3F;
+            color: #EFE8D8;
         }
 
         #sidebar {
@@ -161,8 +210,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             height: 100%;
             width: 250px;
             z-index: 1000;
-            background-color: #343a40; /* Dark background color */
-            color: #ffffff; /* Text color */
+            background-color: #725C3F;
+            color: #EFE8D8;
             padding-top: 20px;
         }
 
@@ -172,23 +221,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         #sidebar .nav-link {
-            color: #ffffff; /* Text color for sidebar links */
+            color: #ffffff;
         }
 
         #sidebar .nav-link:hover {
-            color: #ffffff; /* Hover color for sidebar links */
-            background-color: #6c757d; /* Background color on hover */
+            color: #EFE8D8;
+            background-color: #D0A778;
         }
 
         #sidebar .active {
-            color: #ffffff; /* Active link color */
-            background-color: #495057; /* Background color for active link */
+            color: #725C3F;
+            background-color: #EFE8D8;
         }
 
-        /* Main Content Padding to Avoid Overlapping with Sidebar */
         main {
             margin-left: 130px;
             padding: 20px;
+        }
+
+        body {
+            background-color: #E5e0d8;
+        }
+
+        h2,
+        h3 {
+            color: #725C3F;
         }
     </style>
 </head>
@@ -200,17 +257,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="position-sticky">
                     <ul class="nav flex-column">
                         <li class="nav-item">
-                            <a class="nav-link active" href="#">
+                            <a class="nav-link active" href="masalah1.php">
                                 <i class="bi bi-house-door"></i> Order
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
+                            <a class="nav-link" href="masalah2.php">
                                 <i class="bi bi-person"></i> Shipping
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
+                            <a class="nav-link" href="masalah3.php">
                                 <i class="bi bi-box"></i> Refund
                             </a>
                         </li>
@@ -219,11 +276,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </nav>
 
             <main>
-                <h2 class="text-center mb-4" id="title">Top 5 Product</h2>
+                <h2 class="text-center mb-4" id="title">Superstore Order Report</h2>
                 <div class="container container-filter">
                     <div class="row">
                         <!-- Filter Year -->
-                    <div class="col-md-6">
+                        <div class="col-md-6">
                             <?php
                             foreach ($stmt as $order) {
                                 echo '<div class="year-box" data-status="off" data-year="' . $order['OrderYear'] . '">' . $order['OrderYear'] . '</div>';
@@ -243,83 +300,131 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             </select>
                         </div>
                     </div>
-                    
                 </div>
 
                 <div class="container mt-3 combined-container">
-                    <!-- Table Container -->
-                    <div class="table-container">
-                        <table id="ordersTable"
-                            class="table table-striped table-bordered table-hover table-sm">
-                            <thead class="thead">
-                                <tr>
-                                    <th>Product Name</th>
-                                    <th>Total Ordered</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                            </tbody>
-                        </table>
+                    <div class="row">
+                        <div class="col-lg-3">
+                            <div class="kpiCustomer-box">
+
+                            </div>
+                        </div>
+
+                        <div class="col-lg-3">
+                            <div class="kpiProduct-box">
+
+                            </div>
+                        </div>
+
+                        <div class="col-lg-3">
+                            <div class="kpiOrders-box">
+
+                            </div>
+                        </div>
+
+                        <div class="col-lg-3">
+                            <div class="kpiSales-box">
+
+                            </div>
+                        </div>
                     </div>
 
-                    <!-- Chart Container -->
-                    <div class="chart-container">
-                        <canvas id="barChart" width="400" height="200"></canvas>
+                    <div class="row mt-3 text-center">
+                        <h3 class="mx-auto" id="subtitle"></h3>
                     </div>
+
+
+                    <!-- Table Container -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="table-container">
+                                <table id="ordersTable" class="table table-striped table-bordered table-hover table-sm">
+                                    <thead class="thead">
+                                        <tr>
+                                            <th>Product Name</th>
+                                            <th>Total Ordered</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Table body content will be dynamically populated -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Chart Container -->
+                        <div class="col-md-6">
+                            <div class="chart-container">
+                                <canvas id="barChart" width="400" height="280"></canvas>
+                            </div>
+
+                        </div>
+                    </div>
+
                 </div>
             </main>
-            
+
         </div>
     </div>
 
-        <script>
-            $(document).ready(function() {
-                selectedYears = [];
-                loadData();
+    <script>
+        $(document).ready(function() {
+            selectedYears = [];
+            loadData();
+            updateSubtitle();
 
-                function loadData(selectedSegment = null, selectedYear = []) {
-                    $.ajax({
-                        method: 'POST',
-                        data: {
-                            'segment': selectedSegment,
-                            'year': selectedYear
-                        },
-                        success: function(e) {
-                            var result = JSON.parse(e);
-                            var jumlahOrders = result.stmt2;
-                            var productsName = result.cursor3;
-                            var tableBody = $('#ordersTable tbody');
-                            tableBody.empty();
-                            for (var i = 0; i < jumlahOrders.length; i++) {
-                                var jumlahOrder = jumlahOrders[i].JumlahOrder;
-                                var productName = productsName[i];
-                                var newRow = "<tr>" +
-                                    "<td>" + productName + "</td>" +
-                                    "<td>" + jumlahOrder + "</td>" +
-                                    "</tr>";
-                                tableBody.append(newRow);
-                            }
+            function loadData(selectedSegment = null, selectedYear = []) {
+                $.ajax({
+                    method: 'POST',
+                    data: {
+                        'segment': selectedSegment,
+                        'year': selectedYear
+                    },
+                    success: function(e) {
+                        var result = JSON.parse(e);
+                        var totalCustomer = result.totalCustomer;
+                        var totalProduct = result.totalProduct;
+                        var totalOrders = result.totalOrders;
+                        var avgSales = result.avgSales;
+                        var jumlahOrders = result.stmt2;
+                        var productsName = result.cursor3;
+                        var tableBody = $('#ordersTable tbody');
+                        tableBody.empty();
+                        for (var i = 0; i < jumlahOrders.length; i++) {
+                            var jumlahOrder = jumlahOrders[i].JumlahOrder;
+                            var productName = productsName[i];
+                            var newRow = "<tr>" +
+                                "<td>" + productName + "</td>" +
+                                "<td>" + jumlahOrder + "</td>" +
+                                "</tr>";
+                            tableBody.append(newRow);
+                        }
 
-                            // Bar Chart
-                            new Chart('barChart', {
-                                type: "horizontalBar",
-                                data: {
+                        // KPI
+                        $('.kpiCustomer-box').text(totalCustomer).append('<p>Total Customers</p>');
+                        $('.kpiProduct-box').text(totalProduct).append('<p>Products Ordered</p>');
+                        $('.kpiOrders-box').text(totalOrders).append('<p>Total Order</p>');
+                        $('.kpiSales-box').text(avgSales).append('<p>Average Sales</p>');
+
+                        // Bar Chart
+                        new Chart('barChart', {
+                            type: "horizontalBar",
+                            data: {
                                 labels: productsName,
                                 datasets: [{
                                     fill: false,
                                     lineTension: 0,
-                                    backgroundColor: "rgba(75, 192, 192, 0.2)",
-                                    borderColor: "rgba(75, 192, 192, 1)",
+                                    backgroundColor: "#e5ada8",
+                                    borderColor: "#e5ada8",
                                     data: jumlahOrders.map(order => order.JumlahOrder)
                                 }]
-                                },
-                                options: {
+                            },
+                            options: {
                                 legend: {
                                     display: false
                                 },
                                 scales: {
-                                    yAxes: [{
-                                    }],
+                                    yAxes: [{}],
                                     xAxes: [{
                                         ticks: {
                                             min: 0,
@@ -330,58 +435,79 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 title: {
                                     display: true,
                                     text: '',
-                                    fontColor: 'grey',
+                                    fontColor: '#725c3f',
                                     fontSize: 20
                                 }
-                                }
-                            });
+                            }
+                        });
 
+                    }
+                });
+            }
+
+            // Filter Year
+            $('.year-box').on('click', function() {
+                var status = $(this).data('status');
+                selectedYear = $(this).data('year');
+                if (status == 'off') {
+                    $(this).addClass('selected-year');
+                    $(this).data('status', 'on');
+                    selectedYears.push(selectedYear)
+                } else {
+                    $(this).removeClass('selected-year');
+                    $(this).data('status', 'off');
+                    for (var i = 0; i < selectedYears.length; i++) {
+                        if (selectedYears[i] == selectedYear) {
+                            selectedYears.splice(i, 1);
+                            break;
                         }
-                    });
+                    }
                 }
 
-                $('.year-box').on('click', function() {
-                    var status = $(this).data('status');
-                    selectedYear = $(this).data('year');
-                    if (status == 'off') {
-                        $(this).addClass('selected-year');
-                        $(this).data('status', 'on');
-                        selectedYears.push(selectedYear)
-                    } else {
-                        $(this).removeClass('selected-year');
-                        $(this).data('status', 'off');
-                        for (var i = 0; i < selectedYears.length; i++) {
-                            if (selectedYears[i] == selectedYear) {
-                                selectedYears.splice(i, 1);
-                                break;
-                            }
-                        }
-                    }
+                selectedSegment = $('#selectedSegment').val();
+                if (selectedSegment == 'All Segment') {
+                    selectedSegment = null;
+                }
 
-                    selectedSegment = $('#selectedSegment').val();
-                    if (selectedSegment == 'All Segment') {
-                        selectedSegment = null;
-                    }
+                updateSubtitle(selectedSegment, selectedYears);
+                loadData(selectedSegment, selectedYears);
+            });
 
-                    loadData(selectedSegment, selectedYears);
-                });
+            // Filter Customer Segment
+            $('#selectedSegment').on('change', function() {
+                var selectedSegment = $('#selectedSegment').val();
+                var selectedYear = $('#selectedYear').val();
 
-                $('#selectedSegment').on('change', function() {
-                    var selectedSegment = $('#selectedSegment').val();
-                    var selectedYear = $('#selectedYear').val();
-                    
+                if (selectedSegment == 'All Segment') {
+                    selectedSegment = null;
+                }
 
-                    if (selectedSegment == 'All Segment') {
-                        selectedSegment = null;
-                    }
+                updateSubtitle(selectedSegment, selectedYears);
+                loadData(selectedSegment, selectedYear);
+            });
 
-                    loadData(selectedSegment, selectedYear);
-                });
+            // Update Subtitle
+            function updateSubtitle(segment = null, years = []) {
+                var subtitle = 'Top 5 Products By ';
 
-                
+                if (segment) {
+                    subtitle += segment + ' Segment';
+                } else {
+                    subtitle += 'All Segment';
+                }
 
-            })
-        </script>
+                if (years.length > 0) {
+                    subtitle += ' In ' + years.join(', ');
+                } else {
+                    subtitle += ' In All Years';
+                }
+                $('#subtitle').text(subtitle);
+            }
+
+
+
+        })
+    </script>
 
 </body>
 
