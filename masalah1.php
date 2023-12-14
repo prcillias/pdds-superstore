@@ -13,46 +13,44 @@ $cursor = $customers->distinct('Segment');
 $sql = "SELECT DISTINCT YEAR(OrderDate) AS OrderYear FROM orders";
 $stmt = $conn->query($sql)->fetchAll();
 
-$customerIds = '';
+$customerIds = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['segment'])) {
         $segment = $_POST['segment'];
         $slicer = ($segment !== '') ? ['Segment' => $segment] : [];
         $cursor2 = $customers->find($slicer);
-        $customerIds .= '(';
-        foreach ($cursor2 as $customer) {
-            $customerIds .= "'" . $customer['Customer ID'] . "', ";
+        foreach ($cursor2 as $cust) {
+            $customerIds[] = "'" . $cust['Customer ID'] . "'";
         }
-        $customerIds = rtrim($customerIds, ', ');
-        $customerIds .= ')';
     }
 
     if (isset($_POST['year'])) {
         $year = $_POST['year'];
     }
 
-    $sqlCommon = "SELECT ProductID, COUNT(ProductID) AS JumlahOrder
+    $sql = "SELECT ProductID, COUNT(ProductID) AS JumlahOrder
                 FROM orders
-                WHERE " . (empty($customerIds) ? '1' : "CustomerID IN $customerIds") . (empty($year) ? '' : " AND YEAR(OrderDate) IN (" . implode(",", $year) . ")") . "
+                WHERE " . (empty($customerIds) ? '1' : "CustomerID IN (" . implode(",", $customerIds) . ")") . (empty($year) ? '' : " AND YEAR(OrderDate) IN (" . implode(",", $year) . ")") . "
                 GROUP BY ProductID
                 ORDER BY JumlahOrder DESC
                 LIMIT 5";
 
-    $stmt2 = $conn->query($sqlCommon)->fetchAll();
+    $stmt2 = $conn->query($sql)->fetchAll();
 
     foreach ($stmt2 as $row) {
         $productID = $row['ProductID'];
         $productIDs[] = $productID;
     }
 
+    
     foreach ($productIDs as $productID) {
         $query = ['Product ID' => $productID];
 
         $cursor = $products->find($query);
 
-        foreach ($cursor as $document) {
-            $cursor3[] = $document['Product Name'];
+        foreach ($cursor as $product) {
+            $cursor3[] = $product['Product Name'];
         }
     }
 
@@ -81,8 +79,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <!-- JQUERY -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <!-- <link rel="stylesheet" href="https://code.jquery.com/mobile/1.5.0-alpha.1/jquery.mobile-1.5.0-alpha.1.min.css"> -->
-    <!-- <script src="https://code.jquery.com/mobile/1.5.0-alpha.1/jquery.mobile-1.5.0-alpha.1.min.js"></script> -->
     <!-- CHART.JS -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js"></script>
@@ -95,23 +91,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             background-color: #f8f9fa;
         }
 
+        h2 {
+            font-size: 40px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
         .year-box {
             display: inline-block;
             margin: 5px;
-            padding: 10px;
+            padding: 15px;
             cursor: pointer;
-            border: 1px solid #000;
+            border: 2px solid #000;
+            /* border-radius: 10px; */
+            text-align: center;
+            font-size: 18px;
+            line-height: 1.5;
         }
 
         .selected-year {
             background-color: gray;
             color: white;
         }
+
+        .form-select {
+            font-size: 20px; /* Increased font size */
+            padding: 10px;
+            text-align: center; 
+        }
+
+        #ordersTable th,
+        #ordersTable td {
+            font-size: 18px;
+            padding: 15px;
+        }
     </style>
 </head>
 
 <body>
     <div class="container p-3">
+        <h2 class="text-center mb-4" id="title"></h2>
         <div class="row mt-3">
             <!-- Filter Year -->
             <div class="col-md-6">
@@ -123,7 +142,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
 
             <!-- Filter Customer Segment -->
-            <div class="col-md-3">
+            <div class="col-md-6">
                 <select class="form-select" id="selectedSegment" aria-label="Default select example">
                     <option selected>All Segment</option>
                     <?php
@@ -133,22 +152,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     ?>
                 </select>
             </div>
+        </div>
 
-            <div class="row mt-3">
-                <div class="col-md-12">
-                    <table id="ordersTable" class="table table-striped table-bordered table-hover table-sm">
-                        <thead class="thead">
-                            <tr>
-                                <th>Product Name</th>
-                                <th>Total Ordered</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                        </tbody>
-                    </table>
-                </div>
+        <div class="row mt-3">
+            <div class="col-md-12">
+                <table id="ordersTable" class="table table-striped table-bordered table-hover table-sm">
+                    <thead class="thead">
+                        <tr>
+                            <th>Product Name</th>
+                            <th>Total Ordered</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
             </div>
         </div>
+    </div>
 
         <script>
             $(document).ready(function() {
@@ -211,17 +231,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $('#selectedSegment').on('change', function() {
                     var selectedSegment = $('#selectedSegment').val();
                     var selectedYear = $('#selectedYear').val();
-
-                    if (selectedYear == 'All Year') {
-                        selectedYear = null;
-                    }
+                    
 
                     if (selectedSegment == 'All Segment') {
                         selectedSegment = null;
                     }
 
                     loadData(selectedSegment, selectedYear);
+
+                    var title = "Top 5 Products By " + (selectedSegment ? selectedSegment + " " : "") + "Segment";
+                    $('#title').text(title);
                 });
+
+                
 
             })
         </script>
