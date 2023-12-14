@@ -172,7 +172,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $inputRegion = $('#filter').val()
 
             if($inputRegion == 'Region' || $inputRegion == 'None'){
-                $inputRegion = ''
+                exit;
             }
             $.ajax({
                 method: 'POST',
@@ -381,6 +381,7 @@ h2{
         width: 97%;
     }
 
+    /* On screens that are 600px or less, set the background color to olive */
     @media screen and (max-width: 600px) {
         .modal-body{
             padding: 0 10px;
