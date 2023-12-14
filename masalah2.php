@@ -8,7 +8,6 @@ $stmt = $conn->query($sql)->fetchAll();
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['year'])) {
         $year = $_POST['year'];
-        
     }
 
     $sql_ship = "SELECT 
@@ -75,7 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Poppins">
 </head>
 <style>
-     body {
+    body {
         font-family: 'Poppins', sans-serif;
         background-color: #f8f9fa;
     }
@@ -85,7 +84,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         margin: 5px;
         padding: 10px;
         cursor: pointer;
-        border: 1px solid #000; /* Border color */
+        border: 1px solid #000;
+        /* Border color */
     }
 
     .selected-year {
@@ -132,11 +132,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 
     <script>
-        $(document).ready(function() {
+        $(document).ready(function () {
             updateData();
             // for filter year
             selectedYears = [];
-            $('.year-box').on('click', function() {
+            $('.year-box').on('click', function () {
                 var status = $(this).data('status');
                 selectedYear = $(this).data('year');
                 if (status == 'off') {
@@ -152,40 +152,72 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             break;
                         }
                     }
+                    updateData(selectedYears)
                 }
 
-                updateData(selectedYear)
+                // updateData(selectedYear)
 
             });
 
             function updateData(selectedYear = []) {
                 var tableBody = $('#shipTable tbody');
                 tableBody.empty();
-                
+
                 $.ajax({
                     method: 'POST',
                     data: {
                         'year': selectedYear
                     },
-                    success: function(e) {
+                    success: function (e) {
                         var result = JSON.parse(e);
-                        result.forEach(function(row) {
+                        result.forEach(function (row) {
                             var newRow = '<tr>' +
                                 '<td>' + row.group_duration + '</td>' +
                                 '<td>' + row.avg_rating + '</td>' +
                                 '<td>' + row.rating_percentage + '%</td>' +
                                 '</tr>';
                             tableBody.append(newRow);
-                        });
+
+                        }
+                        );
+                        
                     }
-                
+
                 })
 
-                
+
             }
+
             
-        
+
+
         })
+    </script>
+    <script type="text/javascript">
+        window.onload = function () {
+            var chart = new CanvasJS.Chart("chartContainer",
+                {
+
+                    title: {
+                        text: "Average Rating Percentage by Duration"
+                    },
+                    data: [
+                        {
+                            type: "line",
+
+                            dataPoints: [
+                                
+
+
+
+
+                            ]
+                        }
+                    ]
+                });
+
+            chart.render();
+        }
     </script>
 
 </body>
