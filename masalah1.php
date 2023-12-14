@@ -101,7 +101,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             padding: 10px;
             cursor: pointer;
             border: 1px solid #000;
-            /* Border color */
         }
 
         .selected-year {
@@ -135,103 +134,97 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </select>
             </div>
 
-            <!-- Go Button -->
-            <div class="col-md-3">
-                <button type="button" class="btn btn-primary" id="goBtn">Go</button>
+            <div class="row mt-3">
+                <div class="col-md-12">
+                    <table id="ordersTable" class="table table-striped table-bordered table-hover table-sm">
+                        <thead class="thead">
+                            <tr>
+                                <th>Product Name</th>
+                                <th>Total Ordered</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
-        <div class="row mt-3">
-            <div class="col-md-12">
-                <table id="ordersTable" class="table table-striped table-bordered table-hover table-sm">
-                    <thead class="thead">
-                        <tr>
-                            <th>Product Name</th>
-                            <th>Total Ordered</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
+        <script>
+            $(document).ready(function() {
+                selectedYears = [];
+                loadData();
 
-    <script>
-        $(document).ready(function() {
-            selectedYears = [];
-            loadData();
+                function loadData(selectedSegment = null, selectedYear = []) {
+                    console.log(selectedYear)
+                    $.ajax({
+                        method: 'POST',
+                        data: {
+                            'segment': selectedSegment,
+                            'year': selectedYear
+                        },
+                        success: function(e) {
+                            var result = JSON.parse(e);
+                            var jumlahOrders = result.stmt2;
+                            var productsName = result.cursor3;
+                            var tableBody = $('#ordersTable tbody');
+                            tableBody.empty();
+                            for (var i = 0; i < jumlahOrders.length; i++) {
+                                var jumlahOrder = jumlahOrders[i].JumlahOrder;
+                                var productName = productsName[i];
+                                var newRow = "<tr>" +
+                                    "<td>" + productName + "</td>" +
+                                    "<td>" + jumlahOrder + "</td>" +
+                                    "</tr>";
+                                tableBody.append(newRow);
+                            }
+                        }
+                    });
+                }
 
-            function loadData(selectedSegment = null, selectedYear = []) {
-                console.log(selectedYear)
-                $.ajax({
-                    method: 'POST',
-                    data: {
-                        'segment': selectedSegment,
-                        'year': selectedYear
-                    },
-                    success: function(e) {
-                        var result = JSON.parse(e);
-                        var jumlahOrders = result.stmt2;
-                        var productsName = result.cursor3;
-                        var tableBody = $('#ordersTable tbody');
-                        tableBody.empty();
-                        for (var i = 0; i < jumlahOrders.length; i++) {
-                            var jumlahOrder = jumlahOrders[i].JumlahOrder;
-                            var productName = productsName[i];
-                            var newRow = "<tr>" +
-                                "<td>" + productName + "</td>" +
-                                "<td>" + jumlahOrder + "</td>" +
-                                "</tr>";
-                            tableBody.append(newRow);
+                $('.year-box').on('click', function() {
+                    var status = $(this).data('status');
+                    selectedYear = $(this).data('year');
+                    if (status == 'off') {
+                        $(this).addClass('selected-year');
+                        $(this).data('status', 'on');
+                        selectedYears.push(selectedYear)
+                    } else {
+                        $(this).removeClass('selected-year');
+                        $(this).data('status', 'off');
+                        for (var i = 0; i < selectedYears.length; i++) {
+                            if (selectedYears[i] == selectedYear) {
+                                selectedYears.splice(i, 1);
+                                break;
+                            }
                         }
                     }
+
+                    selectedSegment = $('#selectedSegment').val();
+                    if (selectedSegment == 'All Segment') {
+                        selectedSegment = null;
+                    }
+
+                    loadData(selectedSegment, selectedYears);
                 });
-            }
 
-            $('.year-box').on('click', function() {
-                var status = $(this).data('status');
-                selectedYear = $(this).data('year');
-                if (status == 'off') {
-                    $(this).addClass('selected-year');
-                    $(this).data('status', 'on');
-                    selectedYears.push(selectedYear)
-                } else {
-                    $(this).removeClass('selected-year');
-                    $(this).data('status', 'off');
-                    for (var i = 0; i < selectedYears.length; i++) {
-                        if (selectedYears[i] == selectedYear) {
-                            selectedYears.splice(i, 1);
-                            break;
-                        }
+                $('#selectedSegment').on('change', function() {
+                    var selectedSegment = $('#selectedSegment').val();
+                    var selectedYear = $('#selectedYear').val();
+
+                    if (selectedYear == 'All Year') {
+                        selectedYear = null;
                     }
-                }
 
-                selectedSegment = $('#selectedSegment').val();
-                if (selectedSegment == 'All Segment') {
-                    selectedSegment = null;
-                }
+                    if (selectedSegment == 'All Segment') {
+                        selectedSegment = null;
+                    }
 
-                loadData(selectedSegment, selectedYears);
-            });
+                    loadData(selectedSegment, selectedYear);
+                });
 
-            $('#selectedSegment').on('change', function() {
-                var selectedSegment = $('#selectedSegment').val();
-                var selectedYear = $('#selectedYear').val();
-
-                if (selectedYear == 'All Year') {
-                    selectedYear = null;
-                }
-
-                if (selectedSegment == 'All Segment') {
-                    selectedSegment = null;
-                }
-
-                loadData(selectedSegment, selectedYear);
-            });
-
-        })
-    </script>
+            })
+        </script>
 
 </body>
 
