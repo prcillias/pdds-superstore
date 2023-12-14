@@ -5,60 +5,44 @@ require 'connect.php';
 $client = new MongoDB\Client();
 $customers = $client->superstore->customers;
 
-$state = $customers->distinct('State');
+$regionList = $customers->distinct('Region');
 
-$refunds = "SELECT * FROM refunds";
-$result = $conn->query($refunds);
+$refundsJoin = "SELECT * FROM refunds";
+$result2 = $conn->query($refundsJoin);
+$customerIDsArray = [];
+while ($row = $result2->fetch_assoc()) {
+    $customerIDsArray[] = $row['CustomerID'];
+}
+$cursor = $customers->find(
+    ['Customer ID' => ['$in' => $customerIDsArray]],
+    ['projection' => ['_id' => 0, 'Customer ID' => 1, 'Region' => 1, 'State' => 1]]
+);
+
+foreach ($cursor as $document) {
+    $customerID = $document['Customer ID'];
+    $region = $document['Region'];
+    $state = $document['State'];
+
+    $updateQuery = "UPDATE refunds SET Region = '$region', State = '$state' WHERE CustomerID = '$customerID'";
+    $conn->query($updateQuery);
+}
 
 $customerIds = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $selectedState = isset($_POST['state']) ? $_POST['state'] : null;
+    $selectedRegion = isset($_POST['region']) ? $_POST['region'] : null;
     
-    // Cari cust ID di tabel customer yang sesuai selected state
-    if ($state !== '') {
-        $cursor2 = $customers->find(['State' => $selectedState]);
-        $customerIds .= '(';
-        foreach ($cursor2 as $customer) {
-          $customerIds .= "'" . $customer['Customer ID'] . "', ";
-        }
-        $customerIds = rtrim($customerIds, ', ');
-        $customerIds .= ')';
-    }
-    
-    // Cari customer ID di tabel Refund sesuai cust ID yg selected state (atas)
-    $sql = "SELECT CustomerID, RefundID
+    $sql = "SELECT State, COUNT(RefundID) as Total
             FROM refunds
-            WHERE " . (empty($customerIds) ? '1' : "CustomerID IN $customerIds");
-    $result2 = $conn->query($sql);
-    $custIDs = [];
-    $count = 0;
-    foreach ($result2 as $row) {
-        $custID = $row['CustomerID'];
-        $count = $count + 1;
-        $custIDs[] = $custID;
-    }
-    
+            WHERE Region = '$selectedRegion'
+            GROUP BY State
+            ORDER BY Total DESC";
+    $result = $conn->query($sql);
+    $data = $result->fetch_all(MYSQLI_ASSOC);
 
-    // Ini uda bener munculnya Arizona smua
-    // $custSelected = $customers->find(['Customer ID' => ['$in' => $custIDs]]);
-
-    $aggregationPipeline = [
-        ['$match' => ['Customer ID' => ['$in' => $custIDs]]],
-        ['$group' => ['_id' => '$City', 'count' => ['$sum' => 1]]],
-    ];
-
-    $cityCounts = $customers->aggregate($aggregationPipeline);
-
-    // Output the results
-    // foreach ($cityCounts as $result) {
-    //     echo "City: " . $result['_id'] . ", Count: " . $result['count'] . "\n";
-    // }
-
-    echo json_encode(['totalState' => $count, 'totalCity' => iterator_to_array($cityCounts)]);
+    echo json_encode($data);
     exit;
 }
-$conn->close();
 ?>
 
 <!DOCTYPE html>
@@ -81,13 +65,13 @@ $conn->close();
     <h2>Kota dengan Jumlah Produk Refund Terbanyak dalam Suatu Negara Bagian</h2>
     <div class="filterWrapMini">
         <div class="input-group mb-3">
-            <select class="form-select" id="filterState" aria-label="Floating label select example">
-                <option selected hidden>State</option>
+            <select class="form-select" id="filterRegion" aria-label="Floating label select example">
+                <option selected hidden>Region</option>
                 <option>None</option>
-                <?php foreach($state as $s): ?>
-                <option ><?= $s ?></option>
+                <?php foreach($regionList as $r): ?>
+                <option ><?= $r ?></option>
                 <?php endforeach; ?>
-            </select>
+            </select> 
         <button class="btn btn-primary" type="submit" id="getData">Submit</button>
     </div>
     <div class="noData"></div>
@@ -107,13 +91,13 @@ $conn->close();
                 </tr>
             </thead>
             <tbody>
-                <?php foreach ($result as $r): ?>
+                <?php foreach ($result2 as $r): ?>
                     <tr>
                         <td><?= $r['RefundID'] ?? '' ?></td>
                         <td><?= $r['OrderID'] ?? '' ?></td>
                         <td><?= $r['CustomerID'] ?? '' ?></td>
                         <td><?= $r['RefundDate'] ?? '' ?></td>
-                        <td><?= $r['PrductID'] ?? '' ?></td>
+                        <td><?= $r['ProductID'] ?? '' ?></td>
                         <td><?= $r['RefundAmount'] ?? '' ?></td>
                         <td><?= $r['RefundType'] ?? '' ?></td>
                     </tr>
@@ -125,27 +109,25 @@ $conn->close();
 <script>
      $(document).ready(function(){
         $('#getData').on('click',function(){
-            $inputState = $('#filterState').val()
-            // alert($inputState)
+            $inputRegion = $('#filterRegion').val()
 
-            if($inputState == 'State' || $inputState == 'None'){
-                $inputState = ''
+            if($inputRegion == 'Region' || $inputRegion == 'None'){
+                $inputRegion = ''
             }
             $.ajax({
                 method: 'POST',
                 data: {
-                    state: $inputState
+                    region: $inputRegion
                 },
 
                 success: function (response) {
-                    var responseData = JSON.parse(response);
-                    var totalState = responseData.totalState;
-                    var filteredData = responseData.totalCity;
+                    alert(response);
+                    var filteredData = JSON.parse(response);
+
                     var thead = $('thead');
                     var tbody = $('tbody');
                     var noData = $('.noData');
                     
-                    // Set a flag to indicate whether there is no data
                     var noDataFlag = filteredData.length === 0;
 
                     tbody.empty();
@@ -156,17 +138,16 @@ $conn->close();
                         noData.append('<h3>No data found.</h3>');
                     } else {
                         var header = '<tr>';
-                        header += '<th>City</th>';
+                        header += '<th>State</th>';
                         header += '<th>Count</th>';
                         header += '</tr>';
                         thead.append(header);
                     }
-
-                    alert(totalState);
+                    
                     filteredData.forEach(function (item) {
                         var row = '<tr>';
-                        row += '<td>' + (item._id || '') + '</td>';  // Use item._id for City
-                        row += '<td>' + (item.count || '') + '</td>';
+                        row += '<td>' + (item["State"] || '') + '</td>';
+                        row += '<td>' + (item["Total"] || '') + '</td>';
                         row += '</tr>';
                         tbody.append(row);
                     });
