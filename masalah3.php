@@ -15,33 +15,59 @@ while ($row = $result2->fetch_assoc()) {
 }
 $cursor = $customers->find(
     ['Customer ID' => ['$in' => $customerIDsArray]],
-    ['projection' => ['_id' => 0, 'Customer ID' => 1, 'Region' => 1, 'State' => 1]]
+    ['projection' => ['_id' => 0, 'Customer ID' => 1, 'Region' => 1, 'State' => 1, 'City' => 1]]
 );
 
 foreach ($cursor as $document) {
     $customerID = $document['Customer ID'];
     $region = $document['Region'];
     $state = $document['State'];
+    $city = $document['City'];
 
-    $updateQuery = "UPDATE refunds SET Region = '$region', State = '$state' WHERE CustomerID = '$customerID'";
+    $updateQuery = "UPDATE refunds SET Region = '$region', State = '$state', City = '$city' WHERE CustomerID = '$customerID'";
     $conn->query($updateQuery);
 }
 
 $customerIds = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $selectedRegion = isset($_POST['region']) ? $_POST['region'] : null;
+    if (isset($_POST['region'])) {
+        $selectedRegion = isset($_POST['region']) ? $_POST['region'] : null;
     
-    $sql = "SELECT State, COUNT(RefundID) as Total
-            FROM refunds
-            WHERE Region = '$selectedRegion'
-            GROUP BY State
-            ORDER BY Total DESC";
-    $result = $conn->query($sql);
-    $data = $result->fetch_all(MYSQLI_ASSOC);
+        $sql = "SELECT State, COUNT(RefundID) as Total
+                FROM refunds
+                WHERE Region = '$selectedRegion'
+                GROUP BY State
+                ORDER BY Total DESC
+                LIMIT 3";
+        $result = $conn->query($sql);
+        $data = $result->fetch_all(MYSQLI_ASSOC);
 
-    echo json_encode($data);
-    exit;
+        echo json_encode($data);
+        exit;
+    }
+
+    if (isset($_POST['state'])) {
+        $selectedState = isset($_POST['state']) ? $_POST['state'] : null;
+        $getRegion = "SELECT Region
+                    FROM refunds
+                    WHERE State = '$selectedState'
+                    LIMIT 1";
+        $get = $conn->query($getRegion);
+        $get2 = $get->fetch_all(MYSQLI_ASSOC);
+    
+        $sql = "SELECT City, COUNT(RefundID) as Total
+                FROM refunds
+                WHERE State = '$selectedState'
+                GROUP BY City
+                ORDER BY Total DESC
+                LIMIT 3";
+        $result = $conn->query($sql);
+        $data = $result->fetch_all(MYSQLI_ASSOC);
+
+        echo json_encode(['region' => $get2,'data' => $data, 'state2' => $selectedState]);
+        exit;
+    }
 }
 ?>
 
@@ -50,7 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kota dengan Jumlah Produk Refund Terbanyak dalam Suatu Negara Bagian</title>
+    <title>State with the Most Count of Refunds in a Region</title>
     <!-- BOOTSTRAP -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
     <!-- AJAX -->
@@ -61,11 +87,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
+<!-- Modal Buat success add csv -->
+<div class="p-0 m-0 modal fade" id="modalsucc" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+        <div class="modal-header">
+            <h5 class="modal-title" id="staticBackdropLabel"><b>Test</b></h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+            <div class="row isimodalbagi2 suksesmodal">
+                <div class="baris">
+                    <div ><b id="suksestit">City</b></div>
+                </div>
+                <div class="baris">
+                    <div class="">-</div>
+                </div>
+            </div>
+            <div class="row isimodalbagi2 gagalmodal">
+                <div class="baris">
+                    <div ><b id="gagaltit">Count</b></div>
+                </div>
+                <div class="baris">
+                    <div class=""><b>-</b></div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+        </div>
+    </div>
+
+</div>
 <div class="filterWrap">
-    <h2>Kota dengan Jumlah Produk Refund Terbanyak dalam Suatu Negara Bagian</h2>
+    <h2>State with the Most Count of Refunds in a Region</h2>
     <div class="filterWrapMini">
         <div class="input-group mb-3">
-            <select class="form-select" id="filterRegion" aria-label="Floating label select example">
+            <select class="form-select" id="filter" aria-label="Floating label select example">
                 <option selected hidden>Region</option>
                 <option>None</option>
                 <?php foreach($regionList as $r): ?>
@@ -73,6 +132,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <?php endforeach; ?>
             </select> 
         <button class="btn btn-primary" type="submit" id="getData">Submit</button>
+        </div>
     </div>
     <div class="noData"></div>
 </div>
@@ -109,7 +169,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <script>
      $(document).ready(function(){
         $('#getData').on('click',function(){
-            $inputRegion = $('#filterRegion').val()
+            $inputRegion = $('#filter').val()
 
             if($inputRegion == 'Region' || $inputRegion == 'None'){
                 $inputRegion = ''
@@ -121,7 +181,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 },
 
                 success: function (response) {
-                    alert(response);
+                    // alert(response);
                     var filteredData = JSON.parse(response);
 
                     var thead = $('thead');
@@ -143,10 +203,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         header += '</tr>';
                         thead.append(header);
                     }
-                    
+
                     filteredData.forEach(function (item) {
                         var row = '<tr>';
-                        row += '<td>' + (item["State"] || '') + '</td>';
+                        row += '<td><button class="btn btn-secondary getCities">' + (item["State"] || '') + '</button></td>';
                         row += '<td>' + (item["Total"] || '') + '</td>';
                         row += '</tr>';
                         tbody.append(row);
@@ -164,7 +224,203 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             });
         }) 
-    });
+
+        $(document.body).on('click', '.getCities', function () {
+            $state = $(this).text();
+            // console.log($state)
+            $.ajax({
+                method: 'POST',
+                data: {
+                    state: $state
+                },
+
+                success: function (response) {
+                    // alert(response);
+
+                    var data = JSON.parse(response);
+                    var filteredData = data.data;
+
+                    var citycolumn = '<div class="baris"><div ><b id="suksestit">City</b></div></div>';
+                    var countcolumn = '<div class="baris"><div ><b id="gagaltit">Count</b></div></div>';
+
+                    filteredData.forEach(function (item) {
+
+                        citycolumn = citycolumn + '<div class="baris"><div class="">' + (item["City"] || '') + '</div></div>';
+                        countcolumn = countcolumn + '<div class="baris"><div class="">' + (item["Total"] || '') + '</div></div>';
+                    });
+
+                    $(".modal-title").html("<b>"+data.state2+"</b>");
+
+                    $(".suksesmodal").html(citycolumn);
+                    $(".gagalmodal").html(countcolumn);
+                    $("#modalsucc").modal('show');
+                },
+                error: function(){
+                    Swal.fire({
+                        title: 'Sorry',
+                        text: 'unknown error occurred',
+                        icon: 'error',
+                        confirmButtonText: 'Close',
+                        timer: 3000,
+                        timerProgressBar: true
+                    })
+                }
+            });
+        });
+});
 </script>
 </body>
+<style>
+h2{
+        width: 100%;
+        text-align: center;
+        color: #FF8787;
+    }
+
+    body{
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        background-color: #FFEECC;
+    }
+    .filterWrap{
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin: 30px 0 0 0 ;
+    }
+    .filterWrapMini{
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        max-width: 500px;
+    }
+    .table-wrap{
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin: 30px 0 0 0 ;
+    }
+    .table-wrap-mini{
+        width: 95%;
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        max-width: 1000px;
+        overflow-x: auto;
+    }
+    table {
+        border-collapse: collapse;
+        width: 100%;
+    }
+    th, td {
+        border: 1px solid black;
+        text-align: center;
+        padding: 8px;
+        vertical-align: middle;
+    }
+    th{
+        background-color: #FF8787 !important; 
+    }
+    thead {
+        text-align: center;
+    }
+    button{
+        background-color: #FF8787 !important;
+        border: 1px solid pink Imp !important;
+        border-radius: 50px;
+    }
+    
+    .fullscreen{
+        width: 100vw;
+    }
+
+    .ufwrap-wrap{
+        text-align: center;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+    }
+
+    .ufwrap {
+        /* margin-bottom: 20px; */
+        width: 95%;
+        max-width: 500px;
+    }
+
+    #csvdd{
+        margin: 0 0 20px 0;
+    }
+
+    #file-input {
+        margin-bottom: 10px;
+    }
+
+    .modalsubtitle{
+        /* color: red; */
+        margin-bottom: 10px;
+    }
+
+    #status {
+        font-weight: bold;
+        color: green;
+    }
+
+    .modal-body{
+        margin: 10px 0 0 0;
+        padding: 0 40px;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: flex-start;
+        width: 97%;
+    }
+
+    @media screen and (max-width: 600px) {
+        .modal-body{
+            padding: 0 10px;
+        }
+    }
+
+    .isimodalbagi2{
+        width: 50%;
+    }
+
+    .gagalmodal{
+        display: flex !important;
+        justify-content: flex-end !important;
+    }
+
+    .gagalmodal .baris div{
+        text-align: end;
+    }
+
+    .modal-body {
+    margin: 10px 0 0 0;
+    padding: 0 40px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: flex-start;
+    width: 97%;
+    text-align: center; 
+    }
+
+    .isimodalbagi2 div {
+        text-align: center;
+    }
+
+    .baris {
+        text-align: center;
+    }
+
+    .modal-title {
+        text-align: center;
+    }
+</style>
 </html>
