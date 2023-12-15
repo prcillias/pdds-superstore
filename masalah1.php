@@ -50,12 +50,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         foreach ($cursor as $product) {
             $cursor3[] = $product['Product Name'];
-            $productCategory[] = $product['Category'];
-            $productSubcategory[] = $product['Subcategory'];
-
+            $category[] = $product['Category'];
+            $subcategory[] = $product['Subcategory'];
         }
     }
-
 
     $sql2 = "SELECT COUNT(DISTINCT CustomerID) AS totalCustomer, COUNT(DISTINCT ProductID) AS totalProduct, COUNT(DISTINCT OrderID) AS totalOrders, ROUND(AVG(Sales), 1) AS avgSales
                 FROM orders
@@ -76,8 +74,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $response['totalProduct'] = $totalProduct;
     $response['totalOrders'] = $totalOrders;
     $response['avgSales'] = $avgSales;
-    $response['productCategory'] = $productCategory;
-    $response['productSubcategory'] = $productSubcategory;
+    $response['category'] = $category;
+    $response['subcategory'] = $subcategory;
 
     echo json_encode($response);
     exit;
@@ -109,6 +107,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Poppins">
 
     <style>
+        body{
+        width: 90%;
+        display: flex;
+        }
         .combined-container {
             margin-top: 20px;
             padding: 15px;
@@ -122,7 +124,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             border-radius: 8px;
             margin-bottom: 20px;
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-            background-color: #EFE8D8;
         }
 
         .chart-container canvas {
@@ -149,7 +150,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         [class^="kpi"] {
-            width: 300px;
+            width: 250px;
             height: 105px;
             border: 1px solid #725C3F;
             border-radius: 10px;
@@ -193,8 +194,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         .table thead th {
-            background-color: #E5ADA8;
-            color: #725C3F;
+            background-color: #725C3F;
+            color: #EFE8D8;
+        }
+
+        .table tbody tr:hover {
+            background-color: #D0A778;
+            color: #EFE8D8;
         }
 
         #sidebar {
@@ -229,7 +235,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         main {
-            margin-left: 130px;
+            margin-left: 80px;
             padding: 20px;
         }
 
@@ -245,9 +251,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 
 <body>
-    <div class="container-fluid">
+    <?php include "navbar.php" ?>
+    <div class="container-fluid flex-column" style="flex-grow: 1;">
         <div class="row">
-            <nav id="sidebar">
+            <!-- <nav id="sidebar">
                 <div class="position-sticky">
                     <ul class="nav flex-column">
                         <li class="nav-item">
@@ -267,7 +274,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </li>
                     </ul>
                 </div>
-            </nav>
+            </nav> -->
 
             <main>
                 <h2 class="text-center mb-4" id="title">Superstore Order Report</h2>
@@ -336,10 +343,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     <thead class="thead">
                                         <tr>
                                             <th>Product Name</th>
-                                            <th>Total Ordered</th>
+                                            <th>Category</th>
+                                            <th>Sub-Category</th>
                                         </tr>
                                     </thead>
-                                    <tbody style="background-color: transparent;">
+                                    <tbody>
+                                        <!-- Table body content will be dynamically populated -->
                                     </tbody>
                                 </table>
                             </div>
@@ -353,11 +362,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                         </div>
                     </div>
-
-                    <div class="row mt-3" id="productDetails">
-
-                    </div>
-
 
                 </div>
             </main>
@@ -380,21 +384,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     },
                     success: function(e) {
                         var result = JSON.parse(e);
-                        console.log(result)
                         var totalCustomer = result.totalCustomer;
                         var totalProduct = result.totalProduct;
                         var totalOrders = result.totalOrders;
                         var avgSales = result.avgSales;
                         var jumlahOrders = result.stmt2;
                         var productsName = result.cursor3;
+                        var categoryProduct = result.category;
+                        var subcategoryProduct = result.subcategory;
                         var tableBody = $('#ordersTable tbody');
                         tableBody.empty();
                         for (var i = 0; i < jumlahOrders.length; i++) {
                             var jumlahOrder = jumlahOrders[i].JumlahOrder;
                             var productName = productsName[i];
+                            var category = categoryProduct[i];
+                            var subcategory = subcategoryProduct[i];
                             var newRow = "<tr>" +
                                 "<td>" + productName + "</td>" +
-                                "<td>" + jumlahOrder + "</td>" +
+                                "<td>" + category + "</td>" +
+                                "<td>" + subcategory + "</td>" +
                                 "</tr>";
                             tableBody.append(newRow);
                         }
