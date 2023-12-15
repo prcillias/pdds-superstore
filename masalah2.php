@@ -5,6 +5,103 @@ require 'connect.php';
 $sql = "SELECT DISTINCT YEAR(OrderDate) AS OrderYear FROM orders";
 $stmt = $conn->query($sql)->fetchAll();
 
+$ship_line_2015 = "SELECT 
+                group_duration,
+                round((AVG(rating) / 5) * 100,2) AS rating_percentage
+                FROM (
+                    SELECT 
+                        CASE 
+                            WHEN DATEDIFF(s.shipdate, o.orderdate) < 2 THEN '<2 days'
+                            WHEN DATEDIFF(s.shipdate, o.orderdate) >= 2 AND DATEDIFF(s.shipdate, o.orderdate) <= 4 THEN '2-4 days'
+                            WHEN DATEDIFF(s.shipdate, o.orderdate) > 4 THEN '>4 days'
+                        END AS group_duration,
+                        o.rating AS rating
+                    FROM orders o 
+                    JOIN shipping s ON o.orderid = s.orderid
+                    WHERE YEAR(o.orderdate) = 2015
+                ) AS subquery
+                GROUP BY group_duration";
+
+                $stmt0 = $conn->query($ship_line_2015)->fetchAll();
+
+                foreach ($stmt0 as $ship2015) {
+                    $xLabel2015[] = $ship2015['group_duration'];
+                    $yLabel2015[] = $ship2015['rating_percentage'];
+                }
+
+                $ship_line_2016 = "SELECT 
+                group_duration,
+                round((AVG(rating) / 5) * 100,2) AS rating_percentage
+                FROM (
+                    SELECT 
+                        CASE 
+                            WHEN DATEDIFF(s.shipdate, o.orderdate) < 2 THEN '<2 days'
+                            WHEN DATEDIFF(s.shipdate, o.orderdate) >= 2 AND DATEDIFF(s.shipdate, o.orderdate) <= 4 THEN '2-4 days'
+                            WHEN DATEDIFF(s.shipdate, o.orderdate) > 4 THEN '>4 days'
+                        END AS group_duration,
+                        o.rating AS rating
+                    FROM orders o 
+                    JOIN shipping s ON o.orderid = s.orderid
+                    WHERE YEAR(o.orderdate) = 2016
+                ) AS subquery
+                GROUP BY group_duration";
+
+                $stmt2 = $conn->query($ship_line_2016)->fetchAll();
+
+                foreach ($stmt2 as $ship) {
+                    $xLabel2016[] = $ship['group_duration'];
+                    $yLabel2016[] = $ship['rating_percentage'];
+                }
+
+                $ship_line_2017 = "SELECT 
+                group_duration,
+                round((AVG(rating) / 5) * 100,2) AS rating_percentage
+                FROM (
+                    SELECT 
+                        CASE 
+                            WHEN DATEDIFF(s.shipdate, o.orderdate) < 2 THEN '<2 days'
+                            WHEN DATEDIFF(s.shipdate, o.orderdate) >= 2 AND DATEDIFF(s.shipdate, o.orderdate) <= 4 THEN '2-4 days'
+                            WHEN DATEDIFF(s.shipdate, o.orderdate) > 4 THEN '>4 days'
+                        END AS group_duration,
+                        o.rating AS rating
+                    FROM orders o 
+                    JOIN shipping s ON o.orderid = s.orderid
+                    WHERE YEAR(o.orderdate) = 2017
+                ) AS subquery
+                GROUP BY group_duration";
+
+                $stmt3 = $conn->query($ship_line_2017)->fetchAll();
+
+                foreach ($stmt3 as $ship) {
+                    $xLabel2017[] = $ship['group_duration'];
+                    $yLabel2017[] = $ship['rating_percentage'];
+                }
+
+                $ship_line_2018 = "SELECT 
+                group_duration,
+                round((AVG(rating) / 5) * 100,2) AS rating_percentage
+                FROM (
+                    SELECT 
+                        CASE 
+                            WHEN DATEDIFF(s.shipdate, o.orderdate) < 2 THEN '<2 days'
+                            WHEN DATEDIFF(s.shipdate, o.orderdate) >= 2 AND DATEDIFF(s.shipdate, o.orderdate) <= 4 THEN '2-4 days'
+                            WHEN DATEDIFF(s.shipdate, o.orderdate) > 4 THEN '>4 days'
+                        END AS group_duration,
+                        o.rating AS rating
+                    FROM orders o 
+                    JOIN shipping s ON o.orderid = s.orderid
+                    WHERE YEAR(o.orderdate) = 2018
+                ) AS subquery
+                GROUP BY group_duration";
+
+                $stmt4 = $conn->query($ship_line_2018)->fetchAll();
+
+                foreach ($stmt4 as $ship) {
+                    $xLabel2018[] = $ship['group_duration'];
+                    $yLabel2018[] = $ship['rating_percentage'];
+                }
+
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['year'])) {
         $year = $_POST['year'];
@@ -27,8 +124,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     WHERE " . (empty($year) ? '1' : "YEAR(o.orderdate) IN (" . $year . ")") . "
                 ) AS subquery
                 GROUP BY group_duration";
-
-
 
     $stmt_ship = $conn->query($sql_ship)->fetchAll();
     echo json_encode($stmt_ship);
@@ -69,7 +164,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <style>
     body {
-
+        width: 90%;
+        display:flex;
         font-family: 'Poppins', sans-serif;
         background-color:bisque;
         align-items: center; 
@@ -93,6 +189,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     }
 
+    .shipTable{
+        font-size: 20px;
+        padding: 20px;
+    }
     .selected-year {
         background-color: gray;
         color: white;
@@ -100,6 +200,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     table{
         align-items: center;
         justify-content: center;
+
+    }
+    main{
+        margin-left:300px;
+        padding: 50px
+
 
     }
     thead,
@@ -110,9 +216,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </style>
 
 <body>
+    
+<?php include "navbar.php" ?>
+<main>
+<div class="container-fluid flex-column  justify-content-center align-items-center" style="flex-grow: 1;">
+        
+        <div class="row">
 
-    <div class="container">
-        <div class="row" style="justify-content-center">
         <h1>Processing Time</h1>
 
             <!-- Filter Year -->
@@ -124,8 +234,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ?>
             </div>
         </div>
-        <div class="row justify-content-center align-items-center">
+        <div class="row mt-3 justify-content-center align-items-center">
             <div class="col-md-12">
+
                 <table id="shipTable" class="table table-striped table-bordered table-hover table-sm">
                     <thead>
                         <tr>
@@ -140,6 +251,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             </div>
         </div>
+        </div>
+
         <div class="row">
             <div class="col-md-12">
                 <canvas id="lineChart" width="400" height="400" >
@@ -152,9 +265,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 
     </div>
+</main>
+
 
     <script>
         $(document).ready(function () {
+            linechart();
             updateData();
             // for filter year
             selectedYears = [];
@@ -179,68 +295,79 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             });
             
+            function linechart() {
+                new Chart('lineChart', {
+    type: "line",
+    data: {
+        labels: <?php echo json_encode($xLabel2015); ?>,
+        datasets: [
+            {
+                label: "2015",
+                data: <?php echo json_encode($yLabel2015); ?>,
+                yAxisID: 'y-axis-1',
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1,
+            },
+            {
+                label: "2016",
+                data: <?php echo json_encode($yLabel2016); ?>,
+                yAxisID: 'y-axis-2',
+                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                borderColor: 'rgba(255, 99, 132, 1)',
+                borderWidth: 1,
+            },
+            {
+                label: "2017",
+                data: <?php echo json_encode($yLabel2017); ?>,
+                yAxisID: 'y-axis-3',
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1,
+            },
+            {
+                label: "2018",
+                data: <?php echo json_encode($yLabel2018); ?>,
+                yAxisID: 'y-axis-4',
+                backgroundColor: 'rgba(255, 206, 86, 0.2)',
+                borderColor: 'rgba(255, 206, 86, 1)',
+                borderWidth: 1,
+            },
+            // Add more datasets for other years as needed
+        ]
+    },
+    options: {
+        scales: {
+            yAxes: [
+                {
+                    id: 'y-axis-1',
+                    type: 'linear',
+                    position: 'left',
+                },
+                {
+                    id: 'y-axis-2',
+                    type: 'linear',
+                    position: 'right',
+                },
+                {
+                    id: 'y-axis-3',
+                    type: 'linear',
+                    position: 'right',
+                },
+                {
+                    id: 'y-axis-4',
+                    type: 'linear',
+                    position: 'right',
+                },
+                // Add more y-axes configurations if needed
+            ]
+        }
+    }
+});
 
-            // create function for displaying data using linechart
-            function displayData(data) {
-                var ctx = document.getElementById('lineChart').getContext('2d');
-                var myChart = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: data.map(function (e) {
-                            return e.group_duration
-                        }),
-                        datasets: [{
-                            label: 'Average Rating',
-                            data: data.map(function (e) {
-                                return e.avg_rating
-                            }),
-                            backgroundColor: [
-                                'rgba(255, 99, 132, 0.2)'
-                            ],
-                            borderColor: [
-                                'rgba(255, 99, 132, 1)'
-                            ],
-                            borderWidth: 1
-                        },
-                        {
-                            label: 'Average Rating Percentage',
-                            data: data.map(function (e) {
-                                return e.rating_percentage
-                            }),
-                            backgroundColor: [
-                                'rgba(54, 162, 235, 0.2)'
-                            ],
-                            borderColor: [
-                                'rgba(54, 162, 235, 1)'
-                            ],
-                            borderWidth: 1
-                        }
-                        ]
-                    },
-                    options: {
-                        scales: {
-                            y: {
-                                beginAtZero: true
-                            }
-                        }
-                    }
-                });
 
-            }
+}
 
-            function loadData(selectedYear = []) {
-                $.ajax({
-                    method: 'POST',
-                    data: {
-                        'year': selectedYear
-                    },
-                    success: function (e) {
-                        var result = JSON.parse(e);
-                        displayData(result);
-                    }
-
-                })
-            }
 
             function updateData(selectedYear = []) {
                 var tableBody = $('#shipTable tbody');
@@ -261,6 +388,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 '</tr>';
                             tableBody.append(newRow);
 
+            
+            
+
                         }
                         );
                         
@@ -270,28 +400,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 
             }
-            new Chart('lineChart', {
-                type: "lineChart",
-                data: {
-                    labels: ["<2 days", "2-4 days", ">4 days"],
-                    datasets: [{
-                        // rating percentage
-                        label: "Average Rating Percentage",
-                        data: [<?php echo $stmt_ship[0]['rating_percentage'] ?>, <?php echo $stmt_ship[1]['rating_percentage'] ?>, <?php echo $stmt_ship[2]['rating_percentage'] ?>],
-                        backgroundColor: [
-                            'rgba(54, 162, 235, 0.2)'
-                        ],
-                        borderColor: [
-                            'rgba(54, 162, 235, 1)'
-                        ],
-                        borderWidth: 1,
-        
-                        
-                    }]
-                }
-            })
-
-            
+     
 
 
         })
