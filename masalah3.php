@@ -162,7 +162,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 </div>
 <div class="table-wrap">
-    <div class="table-wrap-mini">
+    <div class="table-wrap-mini rounded">
         <table class="table table-hover">
             <thead>
                 <tr>
@@ -457,7 +457,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         border: 1px solid pink Imp !important;
         border-radius: 50px;
     }
-    
+    tr {
+        background-color: white;
+    }
     .fullscreen{
         width: 100vw;
     }

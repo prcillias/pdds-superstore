@@ -5,7 +5,7 @@
 
 <header>
         <div class="d-flex flex-column flex-shrink-0 sidebar-wrap">
-            <a href="home.php#" class="text-decoration-none logo-wrap">
+            <a  class="text-decoration-none logo-wrap">
             <div class="icon-wrap"><i class="fa-solid fa-database"></i></div> <span style="white-space: nowrap;"></span>
             </a>
             <hr>
