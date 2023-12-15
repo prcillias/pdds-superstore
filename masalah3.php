@@ -1,6 +1,6 @@
 <?php 
 require_once 'autoload.php'; 
-require 'connect.php';
+require 'conn2ect.php';
 
 $client = new MongoDB\Client();
 $customers = $client->superstore->customers;
@@ -8,12 +8,12 @@ $customers = $client->superstore->customers;
 $regionList = $customers->distinct('Region');
 
 $refundsJoin = "SELECT * FROM refunds";
-$result2 = $conn->query($refundsJoin);
+$result2 = $conn2->query($refundsJoin);
 
 $pie = "SELECT Region, Count(RefundID) AS Total
          FROM REFUNDS
          GROUP BY Region";
-$resultPie = $conn->query($pie);
+$resultPie = $conn2->query($pie);
 $pieLabels = [];
 $pieValues = [];
 while ($row = $resultPie->fetch_assoc()) {
@@ -37,7 +37,7 @@ foreach ($cursor as $document) {
     $city = $document['City'];
 
     $updateQuery = "UPDATE refunds SET Region = '$region', State = '$state', City = '$city' WHERE CustomerID = '$customerID'";
-    $conn->query($updateQuery);
+    $conn2->query($updateQuery);
 }
 
 $customerIds = '';
@@ -52,7 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 GROUP BY State
                 ORDER BY Total DESC
                 LIMIT 3";
-        $result = $conn->query($sql);
+        $result = $conn2->query($sql);
         $data = $result->fetch_all(MYSQLI_ASSOC);
 
         echo json_encode($data);
@@ -65,7 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     FROM refunds
                     WHERE State = '$selectedState'
                     LIMIT 1";
-        $get = $conn->query($getRegion);
+        $get = $conn2->query($getRegion);
         $get2 = $get->fetch_all(MYSQLI_ASSOC);
     
         $sql = "SELECT City, COUNT(RefundID) as Total
@@ -74,7 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 GROUP BY City
                 ORDER BY Total DESC
                 LIMIT 3";
-        $result = $conn->query($sql);
+        $result = $conn2->query($sql);
         $data = $result->fetch_all(MYSQLI_ASSOC);
 
         echo json_encode(['region' => $get2,'data' => $data, 'state2' => $selectedState]);
