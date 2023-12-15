@@ -1,6 +1,6 @@
 <?php 
 require_once 'autoload.php'; 
-require 'connect.php';
+require 'connect2.php';
 
 $client = new MongoDB\Client();
 $customers = $client->superstore->customers;
@@ -8,7 +8,19 @@ $customers = $client->superstore->customers;
 $regionList = $customers->distinct('Region');
 
 $refundsJoin = "SELECT * FROM refunds";
-$result2 = $conn->query($refundsJoin);
+$result2 = $conn2->query($refundsJoin);
+
+$pie = "SELECT Region, Count(RefundID) AS Total
+         FROM REFUNDS
+         GROUP BY Region";
+$resultPie = $conn2->query($pie);
+$pieLabels = [];
+$pieValues = [];
+while ($row = $resultPie->fetch_assoc()) {
+    $pieLabels[] = $row['Region'];
+    $pieValues[] = $row['Total'];
+}
+
 $customerIDsArray = [];
 while ($row = $result2->fetch_assoc()) {
     $customerIDsArray[] = $row['CustomerID'];
@@ -25,7 +37,7 @@ foreach ($cursor as $document) {
     $city = $document['City'];
 
     $updateQuery = "UPDATE refunds SET Region = '$region', State = '$state', City = '$city' WHERE CustomerID = '$customerID'";
-    $conn->query($updateQuery);
+    $conn2->query($updateQuery);
 }
 
 $customerIds = '';
@@ -40,7 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 GROUP BY State
                 ORDER BY Total DESC
                 LIMIT 3";
-        $result = $conn->query($sql);
+        $result = $conn2->query($sql);
         $data = $result->fetch_all(MYSQLI_ASSOC);
 
         echo json_encode($data);
@@ -53,7 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     FROM refunds
                     WHERE State = '$selectedState'
                     LIMIT 1";
-        $get = $conn->query($getRegion);
+        $get = $conn2->query($getRegion);
         $get2 = $get->fetch_all(MYSQLI_ASSOC);
     
         $sql = "SELECT City, COUNT(RefundID) as Total
@@ -62,7 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 GROUP BY City
                 ORDER BY Total DESC
                 LIMIT 3";
-        $result = $conn->query($sql);
+        $result = $conn2->query($sql);
         $data = $result->fetch_all(MYSQLI_ASSOC);
 
         echo json_encode(['region' => $get2,'data' => $data, 'state2' => $selectedState]);
@@ -85,6 +97,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
     <!-- SWEET ALERT -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- CHART -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js"></script>
+    <script src="https://cdn.canvasjs.com/ga/canvasjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@0.7.0"></script>
+
 </head>
 <body>
 <!-- Modal Buat success add csv -->
@@ -136,6 +154,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
     <div class="noData"></div>
 </div>
+<div class="col-md-6">
+    <div class="chart-container">
+        <!-- <canvas id="barChart" width="400" height="150"></canvas> -->
+        <canvas id="pieChart" width="400" height="150"></canvas>
+    </div>
+</div>
 <div class="table-wrap">
     <div class="table-wrap-mini">
         <table class="table table-hover">
@@ -166,8 +190,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </table>
     </div>
 </div>
+<div class="col-md-6">
+    <div class="chart-container">
+        <canvas id="barChart" width="400" height="150"></canvas>
+        <!-- <canvas id="pieChart" width="400" height="150"></canvas> -->
+    </div>
+</div>
 <script>
      $(document).ready(function(){
+        pieChart();
         $('#getData').on('click',function(){
             $inputRegion = $('#filter').val()
 
@@ -183,6 +214,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 success: function (response) {
                     // alert(response);
                     var filteredData = JSON.parse(response);
+
+                    var pie = $('#pieChart');
+                    pie.remove();
 
                     var thead = $('thead');
                     var tbody = $('tbody');
@@ -204,12 +238,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         thead.append(header);
                     }
 
+                    var labels = [];
+                    var dataValues = [];
+
                     filteredData.forEach(function (item) {
                         var row = '<tr>';
                         row += '<td><button class="btn btn-secondary getCities">' + (item["State"] || '') + '</button></td>';
                         row += '<td>' + (item["Total"] || '') + '</td>';
                         row += '</tr>';
                         tbody.append(row);
+                        labels.push(item["State"] || '');
+                        dataValues.push(item["Total"] || '');
+                    });
+
+                    new Chart('barChart', {
+                        type: "horizontalBar",
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                fill: false,
+                                lineTension: 0,
+                                backgroundColor: "#e5ada8",
+                                borderColor: "#e5ada8",
+                                data: dataValues
+                            }]
+                        },
+                        options: {
+                            legend: {
+                                display: false
+                            },
+                            layout: {
+                                padding: {
+                                    top: -30
+                                }
+                            },
+                            scales: {
+                                yAxes: [{}],
+                                xAxes: [{
+                                    ticks: {
+                                        beginAtZero: true
+                                    }
+                                    // maxBarThickness: 30,
+                                }],
+                            },
+                            title: {
+                                display: true,
+                                text: '',
+                                fontColor: '#725c3f',
+                                fontSize: 20
+                            }
+                        }
                     });
                 },
                 error: function(){
@@ -224,6 +302,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             });
         }) 
+
+        function pieChart(){
+            new Chart('pieChart', {
+                type: "pie",
+                data: {
+                    labels: <?php echo json_encode($pieLabels); ?>,
+                    datasets: [{
+                        backgroundColor: ["#e5ada8", "#ffa07a", "#98fb98"], // Adjust colors as needed
+                        borderColor: "#fff",
+                        borderWidth: 1,
+                        data: <?php echo json_encode($pieValues); ?>
+                    }]
+                },
+                options: {
+                    legend: {
+                        display: false
+                    },
+                    layout: {
+                        padding: {
+                            top: -30
+                        }
+                    },
+                    plugins: {
+                        datalabels: {
+                            formatter: function (value, context) {
+                                const label = context.chart.data.labels[context.dataIndex];
+                                const percentage = ((value / 112) * 100).toFixed(2) + '%';
+                                return `${label}\n${percentage}`;
+                            }
+                        }
+                     },
+                    title: {
+                        display: true,
+                        text: '',
+                        fontColor: '#725c3f',
+                        fontSize: 20
+                    }
+                }
+        });
+        }
 
         $(document.body).on('click', '.getCities', function () {
             $state = $(this).text();
@@ -267,7 +385,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             });
         });
-});
+    });
 </script>
 </body>
 <style>
@@ -422,6 +540,10 @@ h2{
 
     .modal-title {
         text-align: center;
+    }
+
+    body {
+        width: 100%;
     }
 </style>
 </html>

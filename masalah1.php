@@ -50,8 +50,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         foreach ($cursor as $product) {
             $cursor3[] = $product['Product Name'];
+            $productCategory[] = $product['Category'];
+            $productSubcategory[] = $product['Subcategory'];
+
         }
     }
+
 
     $sql2 = "SELECT COUNT(DISTINCT CustomerID) AS totalCustomer, COUNT(DISTINCT ProductID) AS totalProduct, COUNT(DISTINCT OrderID) AS totalOrders, ROUND(AVG(Sales), 1) AS avgSales
                 FROM orders
@@ -72,6 +76,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $response['totalProduct'] = $totalProduct;
     $response['totalOrders'] = $totalOrders;
     $response['avgSales'] = $avgSales;
+    $response['productCategory'] = $productCategory;
+    $response['productSubcategory'] = $productSubcategory;
 
     echo json_encode($response);
     exit;
@@ -116,6 +122,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             border-radius: 8px;
             margin-bottom: 20px;
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            background-color: #EFE8D8;
         }
 
         .chart-container canvas {
@@ -185,22 +192,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             padding: 15px;
         }
 
-        .table-container {
-            background-color: #E5ADA8;
-        }
-
         .table thead th {
-            background-color: #725C3F;
-            color: #EFE8D8;
-        }
-
-        .table tbody tr:nth-child(even) {
-            background-color: #D0A778;
-        }
-
-        .table tbody tr:hover {
-            background-color: #725C3F;
-            color: #EFE8D8;
+            background-color: #E5ADA8;
+            color: #725C3F;
         }
 
         #sidebar {
@@ -338,15 +332,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div class="row">
                         <div class="col-md-6">
                             <div class="table-container">
-                                <table id="ordersTable" class="table table-striped table-bordered table-hover table-sm">
+                                <table id="ordersTable" class="table table-bordered table-hover table-sm">
                                     <thead class="thead">
                                         <tr>
                                             <th>Product Name</th>
                                             <th>Total Ordered</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
-                                        <!-- Table body content will be dynamically populated -->
+                                    <tbody style="background-color: transparent;">
                                     </tbody>
                                 </table>
                             </div>
@@ -360,6 +353,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                         </div>
                     </div>
+
+                    <div class="row mt-3" id="productDetails">
+
+                    </div>
+
 
                 </div>
             </main>
@@ -382,6 +380,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     },
                     success: function(e) {
                         var result = JSON.parse(e);
+                        console.log(result)
                         var totalCustomer = result.totalCustomer;
                         var totalProduct = result.totalProduct;
                         var totalOrders = result.totalOrders;
