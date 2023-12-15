@@ -131,7 +131,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         h2 {
-            font-size: 40px;
+            font-size: 50px;
             font-weight: bold;
             margin-bottom: 20px;
         }
@@ -246,6 +246,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         h2,
         h3 {
             color: #725C3F;
+        }
+
+        .barChart {
+            font-family: Poppins;
         }
     </style>
 </head>
@@ -431,11 +435,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     display: false
                                 },
                                 scales: {
-                                    yAxes: [{}],
+                                    yAxes: [{
+                                        ticks: {
+                                            fontColor: '#725C3F',
+                                            fontFamily: 'Poppins, sans-serif'
+                                        }
+                                    }],
                                     xAxes: [{
                                         ticks: {
                                             min: 0,
-                                            max: Math.max(...jumlahOrders.map(order => order.JumlahOrder)) + 1
+                                            max: Math.max(...jumlahOrders.map(order => order.JumlahOrder)) + 1,
+                                            fontColor: '#725C3F',
+                                            fontFamily: 'Poppins, sans-serif'
                                         }
                                     }],
                                 },
@@ -443,7 +454,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     display: true,
                                     text: '',
                                     fontColor: '#725c3f',
-                                    fontSize: 20
+                                    fontSize: 20,
+                                    fontFamily: 'Poppins, sans-serif' 
                                 }
                             }
                         });
