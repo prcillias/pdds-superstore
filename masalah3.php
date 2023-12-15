@@ -105,7 +105,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 </head>
 <body>
-<!-- Modal Buat success add csv -->
+<?php include "navbar.php" ?>
+<div class="flex-column" style="flex-grow: 1;">
 <div class="p-0 m-0 modal fade" id="modalsucc" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -154,10 +155,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
     <div class="noData"></div>
 </div>
-<div class="col-md-6">
+<div >
     <div class="chart-container">
         <!-- <canvas id="barChart" width="400" height="150"></canvas> -->
-        <canvas id="pieChart" width="400" height="150"></canvas>
+        <canvas id="pieChart" width="600" height="150"></canvas>
     </div>
 </div>
 <div class="table-wrap">
@@ -190,11 +191,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </table>
     </div>
 </div>
-<div class="col-md-6">
+<div >
     <div class="chart-container">
-        <canvas id="barChart" width="400" height="150"></canvas>
-        <!-- <canvas id="pieChart" width="400" height="150"></canvas> -->
+        <div class="chart-wrap">
+            <canvas id="barChart" width="500" height="150"></canvas>
+            <!-- <canvas id="pieChart" width="400" height="150"></canvas> -->
+        </div>
+
     </div>
+</div>
 </div>
 <script>
      $(document).ready(function(){
@@ -389,17 +394,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </script>
 </body>
 <style>
-h2{
+    h2{
         width: 100%;
         text-align: center;
         color: #FF8787;
     }
 
     body{
-        width: 100%;
+        width: 90%;
         display: flex;
-        justify-content: center;
-        flex-wrap: wrap;
+        /* justify-content: center; */
+        /* flex-wrap: wrap; */
         background-color: #FFEECC;
     }
     .filterWrap{
@@ -544,6 +549,15 @@ h2{
 
     body {
         width: 100%;
+    }
+    .chart-container{
+        width: 100%;
+        display: flex;
+        justify-content: center;
+    }
+    .chart-wrap{
+        width: 70%;
+        padding-bottom: 40px;
     }
 </style>
 </html>
