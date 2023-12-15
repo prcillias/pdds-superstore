@@ -31,15 +31,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 
     $stmt_ship = $conn->query($sql_ship)->fetchAll();
-    // $ship_data_json = json_encode($stmt_ship);
     echo json_encode($stmt_ship);
     exit;
 
-
-
-
-
-    // $sql_ship_dur = "SELECT shipdate, orderdate, shipdate-orderdate FROM orders o join shipping s on o.orderid = s.orderid";
 }
 
 ?>
@@ -75,28 +69,48 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <style>
     body {
+
         font-family: 'Poppins', sans-serif;
-        background-color: #f8f9fa;
+        background-color:bisque;
+        align-items: center; 
     }
 
+    .row{
+        align-items: center;
+        text-align: center;
+        justify-content: center;
+    }
     .year-box {
         display: inline-block;
         margin: 5px;
         padding: 10px;
         cursor: pointer;
         border: 1px solid #000;
-        /* Border color */
+        border-radius: 10px;
+        background-color: pink;
     }
 
     .selected-year {
         background-color: gray;
         color: white;
     }
+    table{
+        align-items: center;
+        justify-content: center;
+
+    }
+    thead,
+    td{
+        justify-content: center;
+        align-items: center;
+    }
 </style>
 
 <body>
     <div class="container">
-        <div class="row">
+        <div class="row" style="justify-content-center">
+        <h1>Processing Time</h1>
+
             <!-- Filter Year -->
             <div class="col-md-6">
                 <?php
@@ -106,8 +120,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ?>
             </div>
         </div>
-        <div class="row">
-            <h1>Processing Time</h1>
+        <div class="row justify-content-center align-items-center">
             <div class="col-md-12">
                 <table id="shipTable" class="table table-striped table-bordered table-hover table-sm">
                     <thead>
@@ -124,7 +137,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
         </div>
         <div class="row">
-            <canvas id="lineChart"></canvas>
+            <div class="col-md-12">
+                <canvas id="lineChart" width="400" height="400"></canvas>
+            </div>
         </div>
 
     </div>
@@ -155,10 +170,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     updateData(selectedYears)
                 }
 
-                // updateData(selectedYear)
-
             });
+            
 
+            // create function for displaying data using linechart
+            function displayData(data) {
+                var ctx = document.getElementById('lineChart').getContext('2d');
+                var myChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: data.map(function (e) {
+                            return e.group_duration
+                        }),
+                        datasets: [{
+                            label: 'Average Rating',
+                            data: data.map(function (e) {
+                                return e.avg_rating
+                            }),
+                            backgroundColor: [
+                                'rgba(255, 99, 132, 0.2)'
+                            ],
+                            borderColor: [
+                                'rgba(255, 99, 132, 1)'
+                            ],
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Average Rating Percentage',
+                            data: data.map(function (e) {
+                                return e.rating_percentage
+                            }),
+                            backgroundColor: [
+                                'rgba(54, 162, 235, 0.2)'
+                            ],
+                            borderColor: [
+                                'rgba(54, 162, 235, 1)'
+                            ],
+                            borderWidth: 1
+                        }
+                        ]
+                    },
+                    options: {
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+
+            }
             function updateData(selectedYear = []) {
                 var tableBody = $('#shipTable tbody');
                 tableBody.empty();
@@ -193,33 +254,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         })
     </script>
-    <script type="text/javascript">
-        window.onload = function () {
-            var chart = new CanvasJS.Chart("chartContainer",
-                {
-
-                    title: {
-                        text: "Average Rating Percentage by Duration"
-                    },
-                    data: [
-                        {
-                            type: "line",
-
-                            dataPoints: [
-                                
-
-
-
-
-                            ]
-                        }
-                    ]
-                });
-
-            chart.render();
-        }
-    </script>
-
+    
 </body>
 
 </html>
