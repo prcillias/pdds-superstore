@@ -88,6 +88,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         border: 1px solid #000;
         border-radius: 10px;
         background-color: pink;
+        border: 2px solid #725C3F;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+
     }
 
     .selected-year {
@@ -107,6 +110,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </style>
 
 <body>
+
     <div class="container">
         <div class="row" style="justify-content-center">
         <h1>Processing Time</h1>
@@ -138,7 +142,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
         <div class="row">
             <div class="col-md-12">
-                <canvas id="lineChart" width="400" height="400"></canvas>
+                <canvas id="lineChart" width="400" height="400" >
+
+                </canvas>
+
             </div>
         </div>
 
@@ -220,6 +227,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 });
 
             }
+
+            function loadData(selectedYear = []) {
+                $.ajax({
+                    method: 'POST',
+                    data: {
+                        'year': selectedYear
+                    },
+                    success: function (e) {
+                        var result = JSON.parse(e);
+                        displayData(result);
+                    }
+
+                })
+            }
+
             function updateData(selectedYear = []) {
                 var tableBody = $('#shipTable tbody');
                 tableBody.empty();
@@ -248,6 +270,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 
             }
+            new Chart('lineChart', {
+                type: "lineChart",
+                data: {
+                    labels: ["<2 days", "2-4 days", ">4 days"],
+                    datasets: [{
+                        // rating percentage
+                        label: "Average Rating Percentage",
+                        data: [<?php echo $stmt_ship[0]['rating_percentage'] ?>, <?php echo $stmt_ship[1]['rating_percentage'] ?>, <?php echo $stmt_ship[2]['rating_percentage'] ?>],
+                        backgroundColor: [
+                            'rgba(54, 162, 235, 0.2)'
+                        ],
+                        borderColor: [
+                            'rgba(54, 162, 235, 1)'
+                        ],
+                        borderWidth: 1,
+        
+                        
+                    }]
+                }
+            })
 
             
 
