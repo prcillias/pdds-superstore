@@ -1,6 +1,6 @@
 <?php 
 require_once 'autoload.php'; 
-require 'conn2ect.php';
+require 'connect2.php';
 
 $client = new MongoDB\Client();
 $customers = $client->superstore->customers;
