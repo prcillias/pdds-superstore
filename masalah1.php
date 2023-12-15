@@ -55,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    $sql2 = "SELECT COUNT(DISTINCT CustomerID) AS totalCustomer, COUNT(DISTINCT ProductID) AS totalProduct, COUNT(DISTINCT OrderID) AS totalOrders, ROUND(AVG(Sales), 1) AS avgSales
+    $sql2 = "SELECT COUNT(DISTINCT CustomerID) AS totalCustomer, COUNT(ProductID) AS totalProduct, COUNT(DISTINCT OrderID) AS totalOrders, ROUND(AVG(Sales), 1) AS avgSales
                 FROM orders
                 WHERE " . (empty($customerIds) ? '1' : "CustomerID IN (" . implode(",", $customerIds) . ")") . (empty($year) ? '' : " AND YEAR(OrderDate) IN (" . implode(",", $year) . ")") . "";
 
@@ -415,7 +415,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $('.kpiCustomer-box').text(totalCustomer).append('<p>Total Customers</p>');
                         $('.kpiProduct-box').text(totalProduct).append('<p>Products Ordered</p>');
                         $('.kpiOrders-box').text(totalOrders).append('<p>Total Order</p>');
-                        $('.kpiSales-box').text(avgSales).append('<p>Average Sales</p>');
+                        $('.kpiSales-box').text(avgSales).append('<p>Average Sales ($) </p>');
 
                         // Bar Chart
                         new Chart('barChart', {
