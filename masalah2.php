@@ -163,68 +163,54 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Poppins">
 </head>
 <style>
-    body {
-        width: 90%;
-        display:flex;
-        font-family: 'Poppins', sans-serif;
-        background-color:bisque;
-        align-items: center; 
-    }
+body {
+    width: 90%;
+    display: flex;
+    font-family: 'Poppins', sans-serif;
+    background-color: bisque;
+    align-items: center;
+    margin: 0 auto; /* Center the content */
+}
 
-    .row{
-        align-items: center;
-        text-align: center;
-        justify-content: center;
-    }
-    .year-box {
-        display: inline-block;
-        margin: 5px;
-        padding: 10px;
-        cursor: pointer;
-        border: 1px solid #000;
-        border-radius: 10px;
-        background-color: pink;
-        border: 2px solid #725C3F;
-        box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+.row {
+    align-items: center;
+    text-align: center;
+    justify-content: center;
+}
 
-    }
+.year-box {
+    display: inline-block;
+    margin: 5px;
+    padding: 10px;
+    cursor: pointer;
+    border: 1px solid #000;
+    border-radius: 10px;
+    background-color: pink;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+}
 
-    .shipTable{
-        font-size: 20px;
-        padding: 20px;
-    }
-    .selected-year {
-        background-color: gray;
-        color: white;
-    }
-    table{
-        align-items: center;
-        justify-content: center;
+.shipTable {
+    font-size: 20px;
+    padding: 20px;
+}
 
-    }
-    main{
-        margin-left:300px;
-        padding: 50px
+.selected-year {
+    background-color: gray;
+    color: white;
+}
 
-
-    }
-    thead,
-    td{
-        justify-content: center;
-        align-items: center;
-    }
+main {
+    margin: 0 auto; /* Center the content */
+    padding: 10px;
+}
 </style>
 
 <body>
     
 <?php include "navbar.php" ?>
-<main>
-<div class="container-fluid flex-column  justify-content-center align-items-center" style="flex-grow: 1;">
-        
+    <main class="container-fluid flex-column justify-content-center align-items-center" style="flex-grow: 1;">
         <div class="row">
-
-        <h1>Processing Time</h1>
-
+            <h1>Processing Time</h1>
             <!-- Filter Year -->
             <div class="col-md-6">
                 <?php
@@ -236,7 +222,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
         <div class="row mt-3 justify-content-center align-items-center">
             <div class="col-md-12">
-
                 <table id="shipTable" class="table table-striped table-bordered table-hover table-sm">
                     <thead>
                         <tr>
@@ -245,27 +230,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <th>Average Rating Percentage</th>
                         </tr>
                     </thead>
-                    <tbody>
-                    </tbody>
+                    <tbody></tbody>
                 </table>
-
             </div>
         </div>
-        </div>
-
         <div class="row">
             <div class="col-md-12">
-                <canvas id="lineChart" width="400" height="400" >
-
-                </canvas>
-
+                <canvas id="lineChart" width="600" height="400"></canvas>
             </div>
         </div>
-
-    </div>
-
-    </div>
-</main>
+    </main>
 
 
     <script>
